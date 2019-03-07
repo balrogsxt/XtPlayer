@@ -3,7 +3,7 @@
 # 示例网址
 https://xtplayer.acgxt.com
 
-##使用方法
+## 使用方法
 
 ```javascript
     window.XtPlayerDebug = true;
