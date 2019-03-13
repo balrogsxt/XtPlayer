@@ -1,12 +1,18 @@
 # XtPlayer
 支持弹幕、字幕的HTML5 播放器(dev)
-# 示例网址
+## Demo
 https://xtplayer.acgxt.com
+## 帮助文档
+https://api.acgxt.com/#/document/xtplayer
 
 ## 使用方法
 
 ```javascript
-    window.XtPlayerDebug = true;
+<script src="https://static.acgxt.com/js/jquery.js"></script>
+<link rel="stylesheet" href="https://xtplayer.acgxt.com/XtPlayer-1.1.0.min.css" type="text/css"/>
+<script src="https://xtplayer.acgxt.com/XtPlayer-1.1.0.min.js"></script>
+<script>
+    window.XtPlayerDebug = true;//开启debug
     var xp = new XtPlayer("#app", {
     src: "8.mp4",//视频资源地址
     width: 800,//宽度
@@ -49,4 +55,5 @@ https://xtplayer.acgxt.com
         api: "https://xtplayer.acgxt.com/subtitle.php"
     }
 });
+</script>
 ```
