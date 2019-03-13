@@ -7,7 +7,7 @@ https://api.acgxt.com/#/document/xtplayer
 
 ## 使用方法
 
-```javascript
+```html
 <script src="https://static.acgxt.com/js/jquery.js"></script>
 <link rel="stylesheet" href="https://xtplayer.acgxt.com/XtPlayer-1.1.0.min.css" type="text/css"/>
 <script src="https://xtplayer.acgxt.com/XtPlayer-1.1.0.min.js"></script>
