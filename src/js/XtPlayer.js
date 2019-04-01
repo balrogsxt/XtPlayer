@@ -11,7 +11,7 @@ class XtPlayer{
         this.info = {
             author:"幻音い",
             website:"https://www.acgxt.com",
-            version:"1.1.0",
+            version:"1.1.1",
             project:"https://xtplayer.acgxt.com"
         }
         this.el = $(element);
@@ -31,6 +31,8 @@ class XtPlayer{
         this._isOpenVolume = false;
         this._isVideoFullScreen = false;
         this._videoLoader = typeof(this._options.loader)=='undefined'?null:this._options.loader;
+        //视频品质列表
+        this._videoQuality = typeof(this._options.quality)=='undefined'?[]:this._options.quality;
 
         //视频长宽
         this._videoWidth = typeof(this._options.width)=='undefined'?null:this._options.width;
@@ -156,49 +158,54 @@ class XtPlayer{
         
         
     }
-    //初始化视频,解析视频
-    _initVideo(){
-        let live = this;
-
-        switch(this._videoLoader){
+    _loaderVideo(src,loader){
+        loader = typeof (loader)=='undefined'?'default':loader;
+        switch (loader) {
             case 'hls':
-                if(typeof(Hls)=='undefined'){
+                if (typeof (Hls) == 'undefined') {
                     Logger.error("缺少Hls.js");
                     break;
                 }
-                if(!Hls.isSupported()){
+                if (!Hls.isSupported()) {
                     Logger.error("浏览器暂不支持Hls.js");
                     break;
                 }
                 Logger.debug(`使用hls.js加载视频`);
                 let hlsPlayer = new Hls();
-                hlsPlayer.loadSource(this.getVideo().src);
+                hlsPlayer.loadSource(src);
                 hlsPlayer.attachMedia(this.getVideo());
-                hlsPlayer.on(Hls.Events.MANIFEST_PARSED,function() {
-                // Logger.debug('load');
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function () {
+                    // Logger.debug('load');
                 });
                 break;
             case 'flv':
-                if(typeof(flvjs)=='undefined'){
+                if (typeof (flvjs) == 'undefined') {
                     Logger.error("缺少flv.js");
                     break;
                 }
-                if(!flvjs.isSupported()){
+                if (!flvjs.isSupported()) {
                     Logger.error("浏览器暂不支持flv.js");
                     break;
                 }
                 Logger.debug(`使用flv.js加载视频`);
                 let flvPlayer = flvjs.createPlayer({
-                    type:'flv',
-                    url:this.getVideo().src
+                    type: 'flv',
+                    url: src
                 });
                 flvPlayer.attachMediaElement(this.getVideo());
                 flvPlayer.load();
-            break;
+                break;
             default:
-            Logger.debug(`使用浏览器默认加载视频`);
-            break;
+                this.getVideo().src = src;
+                Logger.debug(`使用浏览器默认加载视频`);
+                break;
         }
+    }
+    //初始化视频,解析视频
+    _initVideo(){
+        let live = this;
+        //Loader载入视频
+        this._loaderVideo(this.getVideo().src, this._videoLoader);
         this.getVideo().addEventListener("loadstart",function(){
             Logger.debug("开始加载视频");
         });
@@ -272,7 +279,7 @@ class XtPlayer{
                 let liveTime = Math.ceil(new Date().getTime()/1000);
                 if(typeof(live._lastMove)!='undefined'){
                     if(liveTime>live._lastMove+3){
-                        live.el.find(".xt-player-action").css('opacity',0);
+                        // live.el.find(".xt-player-action").css('opacity',0);
                     }
                 }
             }catch(e){
@@ -328,7 +335,7 @@ class XtPlayer{
         });
         //注册点击跳转
         this.el.find(".xt-player-action .top").click(function(e){
-            let per = Math.ceil(e.offsetX/$(this).width()*100);
+            let per = (e.offsetX/$(this).width()*100);
             let currentTime = live.getVideo().duration*per/100;
             live.seek(currentTime);
             live.play();
@@ -417,7 +424,7 @@ class XtPlayer{
                 move_x = ev.clientX - offsets.left,
                 w = $(this).width();
                 if(0>move_x||move_x>w)return false;
-                let per = Math.ceil(move_x/$(this).width()*100);
+                let per = (move_x/$(this).width()*100);
                 let currentTime = live.getVideo().duration*per/100;
                 live.seek(currentTime);
                 move.css({width:per+"%"});
@@ -433,12 +440,21 @@ class XtPlayer{
         });
         //注册滑动时间
         this.el.find(".xt-player-action .top").mousemove(function(e){
-            let per = Math.ceil(e.offsetX/$(this).width()*100);
+            let per = (e.offsetX/$(this).width()*100);
             if(e.offsetY>0){
+                let diffWidth1 = $(this).find('.progress-time').width() / 2;
+                let diffWidth2 = $(this).width() - e.offsetX;
                 let currentTime = live.getVideo().duration*per/100;
-                $(this).find('.progress-time').css({
-                    left:per+"%"
-                });
+                if (diffWidth1 >= e.offsetX || diffWidth1 >= diffWidth2) {
+                    $(this).find('.progress-time').css({
+                        marginLeft: `-${diffWidth1}px`
+                    });
+                }else{
+                    $(this).find('.progress-time').css({
+                        left: (per) + "%",
+                        marginLeft: `-${diffWidth1}px`
+                    });
+                }
                 $(this).find('.progress-time').fadeIn(0);
                 $(this).find('.progress-time').text(util.parseToTime(currentTime));
             }else{
@@ -517,16 +533,32 @@ class XtPlayer{
         $(window).mousemove(()=>{
             live._lastMove = Math.ceil(new Date().getTime()/1000);
         });
-
-        $(".xt-player-setting-controller").mouseleave(function(e){
+        this.el.find(".xt-player-quality").hover(function(){
+            $(this).find(".xt-player-quality-list").css('opacity', 1);
+        },function(){
+            $(this).find(".xt-player-quality-list").css('opacity',0);
+        });
+        this.el.find(".xt-player-quality-list li").click(function(){
+            let src = $(this).attr('xt-src');
+            let loader = $(this).attr('xt-loader');
+            let name = $(this).text();
+            if(typeof(src)=='undefined'){
+                live.showToast("无效的视频",2000);
+                return;
+            }
+            $(this).parent(".xt-player-quality-list").siblings("span").text(name);
+            live._loaderVideo(src, loader);
+        });
+        this.el.find(".xt-player-setting-controller").mouseleave(function (e) {
             if(e.relatedTarget!=null)live._setSettingStatus(false);
         });
-        $(".xt-player-volume-controller").mouseleave(function(e){
+        this.el.find(".xt-player-volume-controller").mouseleave(function (e) {
             if(e.relatedTarget!=null)live._setVolumeStatus(false);
         });
-        $(".xt-player").mouseleave(function(e){
-            if(e.relatedTarget!=null)live.el.find(".xt-player-action").css('opacity',0);
+        this.el.find(".xt-player").mouseleave(function (e) {
+            // if(e.relatedTarget!=null)live.el.find(".xt-player-action").css('opacity',0);
         });
+        
         $(window).click(function(){
             live._lastMove = Math.ceil(new Date().getTime()/1000);
             //菜单关闭
@@ -541,7 +573,6 @@ class XtPlayer{
             if(live._isOpenSettingMenu==true){
                 live._setSettingStatus(false);
             }
-            
         });
         $(window).resize(function(e){
             if(live.el.width()>=$(window).width()&&live.el.height()>=$(window).height()){
@@ -549,20 +580,7 @@ class XtPlayer{
             }else{
                 live._videoFullScreenChange(false);
             }
-        })
-        // this.el[0].addEventListener("fullscreenchange",function(e){
-        //     live._videoFullScreenChange();
-        // });
-        // this.el[0].addEventListener("webkitfullscreenchange",function(e){
-        //     live._videoFullScreenChange();
-        // });
-        // this.el[0].addEventListener("msfullscreenchange",function(e){
-        //     live._videoFullScreenChange();
-        // });
-        // this.el[0].addEventListener("mozfullscreenchange",function(e){
-        //     live._videoFullScreenChange();
-        // });
-
+        });
     }
     _setToggleEvent(el){
         let type = el.attr('data-type');

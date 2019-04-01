@@ -181,7 +181,7 @@ class Danmu{
         }
         return noneLine;
     }
-    _danmuShow(text,color,left,line,isLive){
+    _danmuShow(text,color,left,line,isLive,position){
         line = (parseInt(line)+1);
         let maxLine = Math.floor(this.canvas.height/this._danmuLineHeight);
         //判断是否开启防挡字幕
@@ -194,7 +194,7 @@ class Danmu{
             return;
         }
         if(0>line)return;
-        this.ctx.font=this._danmuFontSize+"px 微软雅黑";
+        this.ctx.font= this._danmuFontSize+"px 微软雅黑";
         this.ctx.globalAlpha = this._danmuOpacity;
         this.ctx.fillStyle = `${color}`;
         let top = this._danmuLineHeight*line+5;
