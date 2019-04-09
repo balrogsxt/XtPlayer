@@ -11,13 +11,14 @@ class XtPlayer{
         this.info = {
             author:"幻音い",
             website:"https://www.acgxt.com",
-            version:"1.1.1",
+            version:"1.2.0",
             project:"https://xtplayer.acgxt.com"
         }
         this.el = $(element);
         this._build = new XtPlayerHtml(this);
         this._video = this.el.children('video');
         this._options = options;
+        this._isInit = false;
         //解析视频格式
         this._initOptions();
         live.setLoading(true);
@@ -50,7 +51,7 @@ class XtPlayer{
         this._videoPreSubtitle = typeof(this._options.presubtitle)=='undefined'?false:this._options.presubtitle;        
         this._videoVolume = typeof(this._options.volume)=='undefined'?1:this._options.volume;        
 
-
+        //视频默认比例
         let scale = {w:16,h:9};
 
         if(this._videoWidth==null&&this._videoHeight==null){
@@ -154,12 +155,27 @@ class XtPlayer{
         }else{
             this.setVolume(this._videoVolume);
         }
+        //读取清晰列表
+        if(this._videoQuality.length!=0){
+            $(".xt-player-quality").fadeIn(0);
+            for(let i in this._videoQuality){
+                let item = this._videoQuality[i];
+                this.el.find(".xt-player-quality .xt-player-quality-list").append(`<li xt-src="${item.src}" xt-loader="${item.loader}">${item.name}</li>`);
+            }
+        }
+        
 
         
-        
+        this._isInit = true;
     }
     _loaderVideo(src,loader){
         loader = typeof (loader)=='undefined'?'default':loader;
+        if(typeof(this._flvPlayer)!='undefined'&&this._flvPlayer!=null){
+            this._flvPlayer.detachMediaElement();
+            this._flvPlayer.destroy();
+            this._flvPlayer = null;
+        }
+
         switch (loader) {
             case 'hls':
                 if (typeof (Hls) == 'undefined') {
@@ -188,18 +204,20 @@ class XtPlayer{
                     break;
                 }
                 Logger.debug(`使用flv.js加载视频`);
-                let flvPlayer = flvjs.createPlayer({
+                this._flvPlayer = flvjs.createPlayer({
                     type: 'flv',
                     url: src
                 });
-                flvPlayer.attachMediaElement(this.getVideo());
-                flvPlayer.load();
+                this._flvPlayer.attachMediaElement(this.getVideo());
+                this._flvPlayer.load();
                 break;
             default:
                 this.getVideo().src = src;
                 Logger.debug(`使用浏览器默认加载视频`);
                 break;
         }
+        this._danmu.setDanmuStatus(false);
+
     }
     //初始化视频,解析视频
     _initVideo(){
@@ -279,7 +297,7 @@ class XtPlayer{
                 let liveTime = Math.ceil(new Date().getTime()/1000);
                 if(typeof(live._lastMove)!='undefined'){
                     if(liveTime>live._lastMove+3){
-                        // live.el.find(".xt-player-action").css('opacity',0);
+                        live.el.find(".xt-player-action").css('opacity',0);
                     }
                 }
             }catch(e){
@@ -368,7 +386,6 @@ class XtPlayer{
             per = Math.round(per);
             let volume = Math.round(per)/100;
             live.setVolume(volume);
-            live.showToast(`音量${per}%`);
         });
         this.el.find(".xt-player-volume-progress-item-btn").click((e)=>{
             e.stopPropagation();
@@ -386,7 +403,6 @@ class XtPlayer{
             per = Math.round(per);
             let volume = Math.round(per)/100;
             live.setVolume(volume);
-            live.showToast(`音量${per}%`);
         });
         this.el.find(".xt-player-volume-progress-item-btn").mousedown(function(e){
             let btn = $(this);
@@ -410,7 +426,6 @@ class XtPlayer{
                 move.css("height",per+"%");
                 let volume = Math.round(per)/100;
                 live.setVolume(volume);
-                live.showToast(`音量${per}%`);
             });
         });
         //拖动滑块
@@ -501,13 +516,25 @@ class XtPlayer{
         this.el.find(".xt-player-setting *").click(function(e){
             e.stopPropagation();
         });
-
+        //窗口全屏
+        this.el.find(".xt-player-window-screen").click(function(){
+            if(live.el.hasClass('xt-player-window-full')){
+                live.cancelWindowFullScreen();
+            }else{
+                live.setWindowFullScreen();
+            }
+        });
         this.el.find(".xt-player-screen > i").click(function(){
             if(live._isVideoFullScreen){
                 live.cancelFullScreen();
             }else{
                 live.setFullScreen();
             }
+        });
+        this.el.find(".double_speed em").click(function(){
+            let speed = $(this).attr('data-speed');
+            console.log('set',speed);
+            live.setSpeed(speed);
         });
         //发送弹幕
         this.el.find(".inputDanmu").keydown(function(e){
@@ -578,6 +605,7 @@ class XtPlayer{
             if(live.el.width()>=$(window).width()&&live.el.height()>=$(window).height()){
                 live._videoFullScreenChange(true);
             }else{
+                
                 live._videoFullScreenChange(false);
             }
         });
@@ -605,6 +633,7 @@ class XtPlayer{
                 this.el.find(".xt-player-screen > i").addClass('xt-icon-screen-max').removeClass('xt-icon-screen-min');
             }
         }else{
+            
             if(flag===true){
                 this._isVideoFullScreen = true;
                 this.el.find(".xt-player-screen > i").addClass('xt-icon-screen-min').removeClass('xt-icon-screen-max');
@@ -634,11 +663,11 @@ class XtPlayer{
             switch(e.keyCode){
                 case 38://top
                 e.preventDefault();
-                live.setVolume(live.getVideo().volume+0.1);
+                live.setVolume(live.getVideo().volume+0.01);
                 break;
                 case 40://bottom
                 e.preventDefault();
-                    live.setVolume(live.getVideo().volume-0.1);
+                    live.setVolume(live.getVideo().volume-0.01);
                 break;
                 case 37://left
                 e.preventDefault();
@@ -659,6 +688,21 @@ class XtPlayer{
             }
         });
     }
+    /**
+     * 窗口全屏
+     */
+    setWindowFullScreen(){
+        this.el.addClass('xt-player-window-full');
+    }
+    /**
+     * 取消窗口全屏
+     */
+    cancelWindowFullScreen(){
+        this.el.removeClass('xt-player-window-full');
+    }
+    /**
+     * 浏览器全屏
+     */
     setFullScreen(){
         let el = this.el[0];
         if (el.requestFullscreen) {
@@ -671,7 +715,11 @@ class XtPlayer{
             this.showToast("浏览器不支持全屏模式",2000);
         }
     }
+    /**
+     * 取消浏览器全屏
+     */
     cancelFullScreen(){
+        this.cancelWindowFullScreen();
         var fullScreenEnabled = document.fullScreenEnabled || document.webkitFullScreenEnabled || document.mozFullScreenEnabled || document.msFullScreenEnabled;
         var isFullScreen = document.fullScreenElement || document.webkitFullScreenElement || document.mozFullScreenElement || document.msFullScreenElement;
         if (fullScreenEnabled === undefined || fullScreenEnabled) {
@@ -718,9 +766,29 @@ class XtPlayer{
         if(0>volume) volume = 0;
         cache.set("videoVolume",volume);
         this.getVideo().volume = volume;
+        if(this._isInit){
+            this.showToast(`音量${Math.ceil(volume*100)}%`);
+        }
+
+        if(volume>=0.6){
+            this.el.find(".xt-icon-volume").addClass("xt-icon-volume3").removeClass("xt-icon-volume1").removeClass("xt-icon-volume2");
+        }else if(0>=volume){
+            this.el.find(".xt-icon-volume").addClass("xt-icon-volume1").removeClass("xt-icon-volume2").removeClass("xt-icon-volume3");
+        }else{
+            this.el.find(".xt-icon-volume").addClass("xt-icon-volume2").removeClass("xt-icon-volume3").removeClass("xt-icon-volume1");
+        }
+        this.el.find(".xt-player-volume-progress-item").css({
+            height:volume*100+"%"
+        });
+
     }
     setSpeed(speed){
+        if(isNaN(speed)){
+            speed = 1;
+        }
+        speed = new Number(speed).toFixed(1);
         this.getVideo().playbackRate = speed;
+        this.showToast(`当前速度${speed}`);
     }
     setLoading(flag){
         if(flag){

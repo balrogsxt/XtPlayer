@@ -4,24 +4,24 @@ module.exports = {
   entry: path.resolve(__dirname, "src/js/main.js"),
   output: {
     path: path.resolve(__dirname, "build"),
-    filename: "js/XtPlayer-1.1.0.js"
+    filename: "js/XtPlayer-1.2.0.min.js"
   },
-  // mode: "production",
-  // module: {
-  //   rules: [
-  //     {
-  //       test: /\.js$/,
-  //       exclude: /node_modules/,
-  //       use: {
-  //         loader: "babel-loader",
-  //         options: {
-  //           presets: ["env"]
-  //         }
-  //       }
-  //     }
-  //   ]
-  // },
-  // optimization: {
-  //   minimizer: [new UglifyJSPlugin()]
-  // }
+  mode: "production",
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["env"]
+          }
+        }
+      }
+    ]
+  },
+  optimization: {
+    minimizer: [new UglifyJSPlugin()]
+  }
 };

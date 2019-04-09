@@ -31,6 +31,7 @@ class Danmu{
         this._startDanmuThread();
     }
     _init(){
+        console.log(this.el.width(),this.el.outerHeight());
         this.canvas.width = this.el.width();
         this.canvas.height = this.el.height();
         this.clearDanmu();
