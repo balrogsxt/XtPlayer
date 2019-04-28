@@ -1,7 +1,9 @@
 # XtPlayer
 支持弹幕、字幕的HTML5 播放器(dev)
-# Demo
+# Demo地址
 https://xtplayer.acgxt.com
+# 详细文档地址
+https://api.acgxt.com/#/document/xtplayer
 
 ## 使用方法
 
@@ -70,3 +72,25 @@ https://xtplayer.acgxt.com
         }
     });
 ```
+# XtPlayer更新日志
+## v1.2.1
+* 1.修复弹幕在窗口全屏下无法自动变动大小问题
+* 2.增加右键画中画模式
+* 3.增加手动设置时间跳转
+* 4.增加设置中按钮开关显示
+
+## v1.2.0
+* 1.增加网页全屏
+* 2.增加右键倍速
+* 3.增加视频品质选择
+* 4.修复已知显示bug
+
+## v1.1.1
+* 1.修复进度条滑块显示差距问题
+
+## v1.1.0
+* 1.修复部分已知Bug
+* 2.增加flv.js加载视频
+
+## v1.0.0
+* 基础XtPlayer创建,支持字幕,弹幕
