@@ -319,7 +319,7 @@ class XtPlayer{
                 let liveTime = Math.ceil(new Date().getTime()/1000);
                 if(typeof(live._lastMove)!='undefined'){
                     if(liveTime>live._lastMove+5){
-                        // live.el.find(".xt-player-action").css('opacity',0);
+                        live.el.find(".xt-player-action").css('opacity',0);
                     }
                 }
             }catch(e){
