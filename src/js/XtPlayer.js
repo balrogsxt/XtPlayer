@@ -11,7 +11,7 @@ class XtPlayer{
         this.info = {
             author:"幻音い",
             website:"https://www.acgxt.com",
-            version:"1.2.0",
+            version:"1.2.1",
             project:"https://xtplayer.acgxt.com"
         }
         this.el = $(element);
@@ -20,17 +20,18 @@ class XtPlayer{
         this._options = options;
         this._isInit = false;
         //解析视频格式
-        this._initOptions();
+        this._initOptions(options);
         live.setLoading(true);
         live._initVideo();
         live._initEvent();
         live._initKey();
     }
-    _initOptions(){
+    _initOptions(options){
         this._isOpenRightMenu = false;
         this._isOpenSettingMenu = false;
         this._isOpenVolume = false;
         this._isVideoFullScreen = false;
+        this._isOpenSetCurrent = false;
         this._videoLoader = typeof(this._options.loader)=='undefined'?null:this._options.loader;
         //视频品质列表
         this._videoQuality = typeof(this._options.quality)=='undefined'?[]:this._options.quality;
@@ -164,7 +165,23 @@ class XtPlayer{
             }
         }
         
-
+        //button disable
+        let buttonOptions = typeof(options.button)=='undefined'?{}:options.button;
+        if(typeof(buttonOptions.volume)!='undefined'&&buttonOptions.volume===false){
+            this.el.find(".xt-player-volume").fadeOut(0)
+        }
+        if(typeof(buttonOptions.setting)!='undefined'&&buttonOptions.setting===false){
+            this.el.find(".xt-player-setting").fadeOut(0)
+        }
+        if(typeof(buttonOptions.windowFullScreen)!='undefined'&&buttonOptions.windowFullScreen===false){
+            this.el.find(".xt-player-window-screen").fadeOut(0)
+        }
+        if(typeof(buttonOptions.fullScreen)!='undefined'&&buttonOptions.fullScreen===false){
+            this.el.find(".xt-player-screen").fadeOut(0)
+        }
+        
+        console.info(`%cXtPlayer v${this.info.version}`,"color:#fff;background-color:#222;padding:5px 10px;border-radius:3px;");
+        console.info(`%cProject ${this.info.project}`,"color:#fff;background-color:#c90;padding:5px 10px;border-radius:3px;");
         
         this._isInit = true;
     }
@@ -222,12 +239,15 @@ class XtPlayer{
     //初始化视频,解析视频
     _initVideo(){
         let live = this;
+        // util.httpGet(this.getVideo().src,{},r=>{
+        //     console.log("视频格式:",r.headers['content-type']);  
+        // });
         //Loader载入视频
         this._loaderVideo(this.getVideo().src, this._videoLoader);
-        this.getVideo().addEventListener("loadstart",function(){
+        this.getVideo().addEventListener("loadstart",function(e){
             Logger.debug("开始加载视频");
         });
-        this.getVideo().addEventListener("canplay",function(){
+        this.getVideo().addEventListener("canplay",function(e){
             Logger.debug("可以播放视频了");
             live.setLoading(false);
             live._initProgress();
@@ -254,10 +274,13 @@ class XtPlayer{
         //播放不代表开始播放
         this.getVideo().addEventListener("play",function(){
             Logger.debug("视频播放");
+            live.el.find(".xt-player-status").fadeOut(0);
             live.el.find(".xt-icon-play").fadeOut(0).siblings('.xt-icon-pause').fadeIn(0);
         });
         this.getVideo().addEventListener("pause",function(){
             Logger.debug("视频暂停");
+            live.el.find(".xt-player-status").fadeIn(0);
+            live.el.find(".xt-player-status .xt-icon-play").fadeIn(0);
             live.el.find(".xt-icon-pause").fadeOut(0).siblings('.xt-icon-play').fadeIn(0);
             live._danmu.setDanmuStatus(false);
         });
@@ -290,14 +313,13 @@ class XtPlayer{
             live.setLoading(true);
             live._danmu.setDanmuStatus(false);
         });
-        
         setInterval(() => {
             //鼠标静止监听
             try{
                 let liveTime = Math.ceil(new Date().getTime()/1000);
                 if(typeof(live._lastMove)!='undefined'){
-                    if(liveTime>live._lastMove+3){
-                        live.el.find(".xt-player-action").css('opacity',0);
+                    if(liveTime>live._lastMove+5){
+                        // live.el.find(".xt-player-action").css('opacity',0);
                     }
                 }
             }catch(e){
@@ -428,6 +450,68 @@ class XtPlayer{
                 live.setVolume(volume);
             });
         });
+        this.el.find(".xt-player-current .set-current-time").keyup(function(e){
+            let time = ($(this).val());
+            let arr = time.split(':');
+            let r = "00:00";
+            if(arr.length==1){
+                if(isNaN(time)){
+                    r = "00:00";
+                }else{
+                    r = util.parseToTime(parseInt(time));
+                    $(this).val(r);
+                }
+            }else{
+                let m = isNaN(arr[0])?0:arr[0];
+                let s = isNaN(arr[1])?0:arr[1];
+                let isUpdate = false;
+                if(s.length>2){
+                    s = parseInt(s);
+                    isUpdate = true;
+                }
+
+                m = parseInt(arr[0]);
+                s = parseInt(arr[1]);
+
+                if(s>=60){
+                    m += Math.floor(s/60);
+                    s = s%60;
+                    r = util.parseToTime(m*60+s);
+                    $(this).val(r);
+                }else{
+                    r = util.parseToTime(m*60+s);
+                    if(isUpdate){
+                        $(this).val(r);
+                    }
+                }
+            }
+            if(e.keyCode==13){
+                let s = util.parseToS(r);
+                if(s>live.getDuration()){
+                    live.showToast("选择的播放时间无法定位到");
+                }else{
+                    live.seek(s);
+                    live.showToast("已跳转");
+                }
+                return false;
+            }
+        });
+        this.el.find(".xt-player-current .player-current-time").click(function(e){
+            e.stopPropagation();
+            let time_el = $(this).fadeOut(0).siblings(".set-current-time");
+            time_el.fadeIn(0);
+            time_el.val(util.parseToTime(live.getCurrentTime()));
+            live._isOpenSetCurrent = true;
+        });
+        this.el.find(".xt-right .run_picture_in_picture").click(function(){
+            live.getVideo().requestPictureInPicture();
+        });
+        this.getVideo().addEventListener('enterpictureinpicture', function() {
+            Logger.debug("已进入画中画模式");
+        });
+        this.getVideo().addEventListener('leavepictureinpicture', function() {
+            Logger.debug("已退出画中画模式");
+        });
         //拖动滑块
         this.el.find(".xt-player-action .top .xt-player-progress").mousedown(function(e){
             let btn = $(this);
@@ -533,7 +617,6 @@ class XtPlayer{
         });
         this.el.find(".double_speed em").click(function(){
             let speed = $(this).attr('data-speed');
-            console.log('set',speed);
             live.setSpeed(speed);
         });
         //发送弹幕
@@ -586,7 +669,7 @@ class XtPlayer{
             // if(e.relatedTarget!=null)live.el.find(".xt-player-action").css('opacity',0);
         });
         
-        $(window).click(function(){
+        $(window).click(function(e){
             live._lastMove = Math.ceil(new Date().getTime()/1000);
             //菜单关闭
             if(live._isOpenRightMenu==true){
@@ -599,6 +682,15 @@ class XtPlayer{
             //设置关闭
             if(live._isOpenSettingMenu==true){
                 live._setSettingStatus(false);
+            }
+            if(live._isOpenSetCurrent==true){
+                e.stopPropagation();
+                if(e.target.className!='set-current-time'){
+                    live.el.find(".xt-player-current .set-current-time").fadeOut(0);
+                    live.el.find(".xt-player-current .player-current-time").fadeIn(0);
+                    live._isOpenSetCurrent = false;
+                }
+                
             }
         });
         $(window).resize(function(e){
@@ -655,7 +747,7 @@ class XtPlayer{
             if(!this.getVideo().paused){
                 this._initProgress();
             }
-        },1000);
+        },500);
     }
     _initKey(){
         let live = this;
@@ -670,12 +762,16 @@ class XtPlayer{
                     live.setVolume(live.getVideo().volume-0.01);
                 break;
                 case 37://left
-                e.preventDefault();
-                    live.seek(live.getCurrentTime()-5);
+                    if(live.el.find('.set-current-time').is(":focus")!=true){
+                        e.preventDefault();
+                        live.seek(live.getCurrentTime()-5);
+                    }
                 break;
                 case 39://right
-                e.preventDefault();
-                    live.seek(live.getCurrentTime()+5);
+                    if(live.el.find('.set-current-time').is(":focus")!=true){
+                        e.preventDefault();
+                        live.seek(live.getCurrentTime()+5);
+                    }
                 break;
                 case 32:
                 e.preventDefault();
@@ -693,12 +789,14 @@ class XtPlayer{
      */
     setWindowFullScreen(){
         this.el.addClass('xt-player-window-full');
+        this._danmu._init();
     }
     /**
      * 取消窗口全屏
      */
     cancelWindowFullScreen(){
         this.el.removeClass('xt-player-window-full');
+        this._danmu._init();
     }
     /**
      * 浏览器全屏

@@ -67,7 +67,7 @@ class Subtitle{
                 }
             }
             
-        }, 1000);
+        }, 500);
     }
     //显示字幕
     setText(text){

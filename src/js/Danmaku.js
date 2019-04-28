@@ -21,6 +21,7 @@ class Danmu{
         $(window).resize(function(e){
             live._init();//canvas跟随变动
         });
+
         //载入弹幕库配置
         this._initDanmuOptions();
 
@@ -31,7 +32,6 @@ class Danmu{
         this._startDanmuThread();
     }
     _init(){
-        console.log(this.el.width(),this.el.outerHeight());
         this.canvas.width = this.el.width();
         this.canvas.height = this.el.height();
         this.clearDanmu();
@@ -84,6 +84,8 @@ class Danmu{
             }
             //弹幕发送接口
             if(typeof(config.send)!='undefined'){
+                $(".xt-player-danmu .xt-player-damuku-warp").fadeIn(0);
+                $(".xt-player-send-danmu .sendDanmu").fadeIn(0);
                 this._danmuSendApi = config.send;
             }
             //弹幕密集

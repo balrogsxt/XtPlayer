@@ -15,6 +15,9 @@ class Build{
             </path>
         </svg>
     </div>
+    <div class="xt-player-status">
+        <i class="xt-icon-play" xt-title="播放"></i>
+    </div>
     <video src="#" class="xt-player-video"></video>
     <div class="xt-player-danmaku">
         <canvas class="xt-player-danmu"></canvas>
@@ -35,11 +38,17 @@ class Build{
                 <i class="xt-icon-pause" xt-title="暂停"></i>
             </div>
             <div class="xt-player-current">
-                <em class="xt-player-current-time">00:00</em> <span>/</span>
-                <em class="xt-player-count-time">00:00</em>
+                <input type="text" placeholder="00:00" value="00:00" class="set-current-time">
+                <div class="player-current-time">
+                    <em class="xt-player-current-time">00:00</em> 
+                    <span>/</span>
+                    <em class="xt-player-count-time">00:00</em>
+                </div>
             </div>
             <div class="xt-player-danmu">
-                <input type="text" class="inputDanmu" placeholder="不来一发弹幕嘛~" />
+                <div class="xt-player-damuku-warp">
+                    <input type="text" class="inputDanmu" placeholder="不来一发弹幕嘛~" />
+                </div>
             </div>
             <div class="xt-player-send-danmu">
                 <i class="xt-icon-send sendDanmu" xt-title="发送弹幕"></i>
@@ -128,6 +137,7 @@ class Build{
         <ul>
             <li><a href="${this.XtPlayer.info.project}" target="_blank">XtPlayer v${this.XtPlayer.info.version}</a></li>
             <li><a href="${this.XtPlayer.info.website}" target="_blank">关于作者</a></li>
+            <li class="run_picture_in_picture"><a href="javascript:;">画中画</a></li>
             <li class="double_speed">
                 <em title="0.5倍速" data-speed="0.5">0.5</em>
                 <em title="1.0倍速" data-speed="1.0">正常</em>

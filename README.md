@@ -31,7 +31,6 @@ https://xtplayer.acgxt.com
                 loader:"mp4"
             }
         ],
-        list:
         width: 800,//宽度
         height: 'auto',//auto为自动高度
         //初始化时的预览图

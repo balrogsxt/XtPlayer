@@ -4,7 +4,7 @@ module.exports = {
   entry: path.resolve(__dirname, "src/js/main.js"),
   output: {
     path: path.resolve(__dirname, "build"),
-    filename: "js/XtPlayer-1.2.0.min.js"
+    filename: "js/XtPlayer-1.2.1.min-debug.js"
   },
   mode: "production",
   module: {
